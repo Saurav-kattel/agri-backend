@@ -12,12 +12,21 @@ type ApiResponse struct {
 }
 
 type User struct {
-	Id        string `json:"id" db:"id"`
+	Id        string  `json:"id" db:"id"`
+	Username  string  `json:"username" db:"username"`
+	FirstName string  `json:"first_name" db:"first_name"`
+	LastName  string  `json:"last_name" db:"last_name"`
+	Email     string  `json:"email" db:"email"`
+	Phone     string  `json:"phone" db:"phone"`
+	Password  string  `json:"passowrd" db:"password"`
+	Role      string  `json:"role" db:"role"`
+	CreatedAt *string `json:"created_at" db:"created_at"`
+}
+
+type UserPayload struct {
 	Username  string `json:"username" db:"username"`
 	FirstName string `json:"first_name" db:"first_name"`
 	LastName  string `json:"last_name" db:"last_name"`
 	Email     string `json:"email" db:"email"`
 	Phone     string `json:"phone" db:"phone"`
-	Password  string `json:"passowrd" db:"password"`
-	Role      string `json:"role" db:"role"`
 }
