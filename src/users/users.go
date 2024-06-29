@@ -6,16 +6,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func CreateUser(db *sqlx.DB, payload *lib.UserPayload, hash string, role string) error {
+func CreateUser(db *sqlx.DB, payload *lib.UserPayload, hash string) error {
 	_, err := db.Exec(
-		"INSERT INTO users(first_name,last_name,email,password,phone,username,role) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-		payload.FirstName,
-		payload.LastName,
+		"INSERT INTO users(email,password,phone,username,account_type,address) VALUES ($1,$2,$3,$4,$5,$6)",
 		payload.Email,
 		hash,
 		payload.Phone,
 		payload.Username,
-		role,
+		payload.AccountType,
+		payload.Address,
 	)
 
 	return err

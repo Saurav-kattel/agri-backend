@@ -7,7 +7,7 @@ import (
 
 func ValidateUserPayload(payload *User) *ApiResponse {
 
-	if payload.Role != "user" && payload.Role != "admin" {
+	if payload.AccountType != "seller" && payload.AccountType != "buyer" {
 		return &ApiResponse{
 			Status:  http.StatusBadRequest,
 			Message: "unkown role field",
