@@ -14,7 +14,7 @@ import (
 
 func TestValidateUserPayload(t *testing.T) {
 	type args struct {
-		payload *lib.User
+		payload *lib.UserPayload
 	}
 	tests := []struct {
 		name string
@@ -24,8 +24,7 @@ func TestValidateUserPayload(t *testing.T) {
 		{
 			name: "invalid email",
 			args: args{
-				payload: &lib.User{
-					Id:          "123",
+				payload: &lib.UserPayload{
 					Username:    "Sam",
 					Password:    "1234567890",
 					Email:       "kattelsaurav.com",
@@ -45,8 +44,7 @@ func TestValidateUserPayload(t *testing.T) {
 		{
 			name: "invalid password",
 			args: args{
-				payload: &lib.User{
-					Id:          "123",
+				payload: &lib.UserPayload{
 					Username:    "Sam",
 					Password:    "1290",
 					Email:       "kattelsaurav32@gmail.com",
@@ -66,8 +64,7 @@ func TestValidateUserPayload(t *testing.T) {
 		}, {
 			name: "invalid phone",
 			args: args{
-				payload: &lib.User{
-					Id:          "123",
+				payload: &lib.UserPayload{
 					Username:    "Sam",
 					Password:    "1234567890",
 					Email:       "kattelsaurav32@gmail.com",
@@ -86,8 +83,7 @@ func TestValidateUserPayload(t *testing.T) {
 		}, {
 			name: "valid",
 			args: args{
-				payload: &lib.User{
-					Id:          "123",
+				payload: &lib.UserPayload{
 					Username:    "Sam",
 					Password:    "1234567890",
 					Email:       "kattelsaurav@32gmail.com",
@@ -114,7 +110,7 @@ func TestCreateUser(t *testing.T) {
 	defer mockDB.Close()
 	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
 
-	mock.ExpectExec("INSERT INTO users").WithArgs("sauravkattel@32gmail.com", "23132jdsadas", "12341213131", "asurab", "buyer", "ilam").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery("INSERT INTO users").WithArgs("sauravkattel@32gmail.com", "23132jdsadas", "12341213131", "asurab", "buyer", "ilam").WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("1"))
 	type args struct {
 		hash    string
 		role    string
@@ -144,7 +140,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		err := users.CreateUser(sqlxDB, tt.args.payload, tt.args.hash)
+		_, err := users.CreateUser(sqlxDB, tt.args.payload, tt.args.hash)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("CreateUsers error occured %+v want err %+v", err, tt.wantErr)
 		}

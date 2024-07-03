@@ -11,14 +11,16 @@ type writerWrapper struct {
 	Status int
 }
 
+type Middleware func(http.Handler) http.Handler
+
 func (w *writerWrapper) WriteHeader(statusCode int) {
 	w.ResponseWriter.WriteHeader(statusCode)
 	w.Status = statusCode
 
 }
 
-func LoggerMiddleWare(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func LoggerMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		status := &writerWrapper{
 			ResponseWriter: w,
@@ -26,10 +28,8 @@ func LoggerMiddleWare(next http.Handler) http.HandlerFunc {
 		}
 		next.ServeHTTP(status, r)
 		log.Println(status.Status, r.Method, r.URL.Path, time.Since(start))
-	}
+	})
 }
-
-type Middleware func(http.Handler) http.Handler
 
 func CreateStack(xs ...Middleware) Middleware {
 	return func(next http.Handler) http.Handler {

@@ -6,18 +6,22 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func CreateUser(db *sqlx.DB, payload *lib.UserPayload, hash string) error {
-	_, err := db.Exec(
-		"INSERT INTO users(email,password,phone,username,account_type,address) VALUES ($1,$2,$3,$4,$5,$6)",
+func CreateUser(db *sqlx.DB, payload *lib.UserPayload, hash string) (*string, error) {
+	var id string
+	err := db.QueryRowx(
+		"INSERT INTO users(email,password,phone,username,account_type,address) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
 		payload.Email,
 		hash,
 		payload.Phone,
 		payload.Username,
 		payload.AccountType,
 		payload.Address,
-	)
+	).Scan(&id)
+	if err != nil {
 
-	return err
+		return nil, err
+	}
+	return &id, nil
 }
 
 func GetUsersByUserId(db *sqlx.DB, id string) (*lib.User, error) {
