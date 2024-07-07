@@ -11,6 +11,16 @@ type ApiResponse struct {
 	Response Res
 }
 
+type JwtData struct {
+	Id    string `json:"id"`
+	Email string `json:"email"`
+}
+
+type UserLoginPayload struct {
+	Email    string `json:"email" db:"email"`
+	Password string `json:"passowrd" db:"password"`
+}
+
 type User struct {
 	Id          string  `json:"id" db:"id"`
 	Username    string  `json:"username" db:"username"`

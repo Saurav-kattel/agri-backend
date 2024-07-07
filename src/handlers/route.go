@@ -11,11 +11,12 @@ import (
 func GetRoutes(db *sqlx.DB, ctx context.Context) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	authMiddleWare := middlewares.CreateStack(
+	unAuthMiddleWare := middlewares.CreateStack(
 		middlewares.LoggerMiddleWare,
 	)
 
-	mux.Handle("/api/v1/user/register", authMiddleWare(RegisterUserHandler(db, ctx)))
+	mux.Handle("/api/v1/user/register", unAuthMiddleWare(RegisterUserHandler(db, ctx)))
+	mux.Handle("/api/v1/user/login", unAuthMiddleWare(LoginUserHandler(db, ctx)))
 
 	return mux
 }

@@ -1,7 +1,6 @@
 package test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"sauravkattel/agri/src/lib"
@@ -51,46 +50,48 @@ func TestWriteResponse(t *testing.T) {
 	}
 }
 
-func TestCancleHttpRequestOpearation(t *testing.T) {
+func TestHashCompare(t *testing.T) {
+
 	type args struct {
-		ctx context.Context
+		hash     string
+		password string
+		salt     string
 	}
+
 	tests := []struct {
 		name string
 		args args
-		want int
+		want bool
 	}{
 		{
-			name: "passed request",
+			name: "valid password test",
 			args: args{
-				ctx: func() context.Context {
-					ctx, cancle := context.WithCancel(context.Background())
-					defer cancle()
-					return ctx
-				}(),
+				hash:     "47de6b8943d4c679ee1c5c927383b1b324f54c7f863c8fe4a532d97ab7328ac2",
+				password: "myvar",
+				salt:     "hi",
 			},
-			want: 200,
+			want: true,
 		}, {
-			name: "cancle request",
+			name: "invalid password test",
 			args: args{
-				ctx: func() context.Context {
-					ctx := context.Background()
-					return ctx
-				}(),
+				hash:     "de6b8943d4c679ee1c5c927383b1b324f54c7f863c8fe4a532d97ab7328ac2",
+				password: "myvar",
+				salt:     "hi",
 			},
-			want: http.StatusRequestTimeout,
+			want: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := lib.CancleHttpRequestOpearation(tt.args.ctx); got != tt.want {
-				t.Errorf("CancleHttpRequestOpearation() = %v, want %v", got, tt.want)
+			got := lib.ComparePassword(tt.args.hash, tt.args.password, tt.args.salt)
+			if got != tt.want {
+				t.Errorf("HashGenereator() want = %+v, got = %+v", tt.want, got)
 			}
 		})
 	}
-}
 
+}
 func TestHashPassword(t *testing.T) {
 
 	type args struct {
@@ -122,6 +123,48 @@ func TestHashPassword(t *testing.T) {
 		})
 	}
 
+}
+
+func TestParseJwt(t *testing.T) {
+
+	type args struct {
+		token string
+		key   string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    *lib.JwtData
+		wantErr bool
+	}{
+		{
+			name: "run jwt parse test",
+			args: args{
+				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhpIiwiaWQiOiJteXZhciJ9.gAoIG9FJIQM28idWKRAZqc8t6wGNyYlNUt5q17yFuNk",
+				key:   "saurav",
+			},
+			want: &lib.JwtData{
+				Email: "hi",
+				Id:    "myvar",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := lib.ParseJwt(tt.args.token, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("want err %+v got err %+v", tt.wantErr, err)
+			}
+
+			assert.NotNil(t, got, "returned value was nil")
+			assert.Equalf(t, got.Email, tt.want.Email, "email didnot match want %s got %s", tt.want.Email, got.Email)
+			assert.Equalf(t, got.Id, tt.want.Id, "id didnot match want %s got %s", tt.want.Id, got.Id)
+
+		})
+	}
 }
 
 func TestJwtWriter(t *testing.T) {
