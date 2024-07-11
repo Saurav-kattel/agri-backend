@@ -54,6 +54,24 @@ func GetProducts(db *sqlx.DB, pageNumber, pageSize int) (*[]lib.ProductDetails, 
 	return &data, err
 }
 
-func GetProductsBySlug() {
-
+func GetProductsBySlug(db *sqlx.DB, slug string) (*lib.ProductDetails, error) {
+	var data lib.ProductDetails
+	err := db.QueryRowx(`
+		SELECT 
+		products.id as id,
+		products.name as name,
+		products.dec as dec,
+		products.created_at as created_at,
+		pa.id as attrib_id,
+		pa.price as price,
+		pa.quantity as quantity,
+		pa.slug as slug,
+		pa.status as status,
+		pa.product_id as product_id
+		FROM products JOIN product_attrib pa ON products.id = pa.product_id WHERE pa.status <> '0' AND pa.slug = $1
+		`, slug).StructScan(&data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, err
 }

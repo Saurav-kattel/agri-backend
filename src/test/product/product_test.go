@@ -102,3 +102,50 @@ func TestAddProduct(t *testing.T) {
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err, "Expectations were not met")
 }
+
+func TestGetProductsBySlug(t *testing.T) {
+	// Create a new mock database
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	// Create a SQLx DB instance from the mockDB
+	db := sqlx.NewDb(mockDB, "sqlmock")
+
+	// Mock expected query and return values
+	rows := sqlmock.NewRows([]string{
+		"products.id", "products.name", "products.description", "products.created_at",
+		"pa.id as attrib_id", "pa.price", "pa.quantity", "pa.status", "pa.slug",
+	}).AddRow(
+		1, "Product 1", "Description 1", "2024-07-11 10:00:00",
+		101, 19.99, 50, "1", "product-xyz",
+	)
+
+	mock.ExpectQuery(`
+		SELECT 
+		products.id as id,
+		products.name as name,
+		products.dec as dec,
+		products.created_at as created_at,
+		pa.id as attrib_id,
+		pa.price as price,
+		pa.quantity as quantity,
+		pa.slug as slug,
+		pa.status as status,
+		pa.product_id as product_id
+		FROM products JOIN product_attrib pa ON products.id = pa.product_id WHERE pa.status <> '0' AND pa.slug = \$1
+	`).WithArgs("product-xyz").WillReturnRows(rows)
+
+	// Call GetProducts function
+	result, err := product.GetProductsBySlug(db, "product-xyz")
+
+	// Verify results
+	assert.NoError(t, err, "GetProducts should not return an error")
+	assert.NotNil(t, result, "Result should not be nil")
+
+	// Assert that all expectations were met
+	err = mock.ExpectationsWereMet()
+	assert.NoError(t, err, "Expectations were not met")
+}
