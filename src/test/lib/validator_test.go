@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sauravkattel/agri/src/lib"
@@ -8,6 +9,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGetRandomCharKey(t *testing.T) {
+	t.Run("generate random char", func(t *testing.T) {
+		seq := lib.GetRandomCharSequence()
+		fmt.Printf("t: %v\n", seq)
+		assert.Len(t, seq, 5, "invalid char squence")
+	})
+}
 
 func TestWriteResponse(t *testing.T) {
 	tests := []struct {

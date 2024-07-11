@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"time"
@@ -220,4 +221,18 @@ func ParseJwt(token, secret string) (*JwtData, error) {
 	}
 
 	return nil, errors.New("invalid token")
+}
+
+func GetRandomCharSequence() string {
+	chars := []rune("abcdefghijklmnopqrstuvwxyz")
+	buff := []rune{}
+
+	rand.Shuffle(len(chars), func(i, j int) {
+		chars[i], chars[j] = chars[j], chars[i]
+	})
+	for i := 0; i < 5; i++ {
+		buff = append(buff, chars[i])
+	}
+
+	return string(buff)
 }

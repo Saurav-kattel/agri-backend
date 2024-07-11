@@ -92,8 +92,9 @@ func TestAddProduct(t *testing.T) {
 	// Mock expected query and return values for addAttrib function
 	mock.ExpectExec(`INSERT INTO product_attrib`).WithArgs(attrib.Price, attrib.Quantity, attrib.Status, "product123", "Test_Product").WillReturnResult(sqlmock.NewResult(1, 1))
 
+	slug := "Test_Product"
 	// Call AddProduct function
-	err = product.AddProduct(db, products, attrib, userID)
+	err = product.AddProduct(db, products, attrib, userID, slug)
 
 	// Verify results
 	assert.NoError(t, err, "AddProduct should not return an error")
@@ -148,4 +149,38 @@ func TestGetProductsBySlug(t *testing.T) {
 	// Assert that all expectations were met
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err, "Expectations were not met")
+}
+
+func TestUpdateAttrib(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %s", err)
+	}
+	defer db.Close()
+
+	// Create a new sqlx DB instance
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	// Define test cases
+	tests := []struct {
+		slug     string
+		table    string
+		column   string
+		value    interface{}
+		expected string
+	}{
+		{"test-slug", "product_attrib", "quantity", 10, `UPDATE product_attrib SET quantity = \$1 WHERE slug = \$2`},
+		{"test-slug", "product_attrib", "price", 19.99, `UPDATE product_attrib SET price = \$1 WHERE slug = \$2`},
+		{"test-slug", "product_attrib", "status", "available", `UPDATE product_attrib SET status = \$1 WHERE slug = \$2`},
+	}
+
+	for _, tt := range tests {
+		mock.ExpectExec(tt.expected).
+			WithArgs(tt.value, tt.slug).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		err := product.UpdateProductAttrib(sqlxDB, tt.slug, tt.table, tt.column, tt.value)
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	}
 }
