@@ -167,11 +167,13 @@ func TestUpdateAttrib(t *testing.T) {
 		table    string
 		column   string
 		value    interface{}
+		field    string
 		expected string
 	}{
-		{"test-slug", "product_attrib", "quantity", 10, `UPDATE product_attrib SET quantity = \$1 WHERE slug = \$2`},
-		{"test-slug", "product_attrib", "price", 19.99, `UPDATE product_attrib SET price = \$1 WHERE slug = \$2`},
-		{"test-slug", "product_attrib", "status", "available", `UPDATE product_attrib SET status = \$1 WHERE slug = \$2`},
+		{"test-slug", "product_attrib", "quantity", 10, "id", `UPDATE product_attrib SET quantity = \$1 WHERE id = \$2`},
+		{"test-slug", "product_attrib", "price", 19.99, "id", `UPDATE product_attrib SET price = \$1 WHERE id = \$2`},
+		{"test-slug", "product_attrib", "status", "1", "id", `UPDATE product_attrib SET status = \$1 WHERE id  = \$2`},
+		{"test-slug", "products", "name", "saurav", "slug", `UPDATE products SET name = \$1 WHERE slug = \$2`},
 	}
 
 	for _, tt := range tests {
@@ -179,7 +181,7 @@ func TestUpdateAttrib(t *testing.T) {
 			WithArgs(tt.value, tt.slug).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := product.UpdateProductAttrib(sqlxDB, tt.slug, tt.table, tt.column, tt.value)
+		err := product.UpdateProductAttrib(sqlxDB, tt.slug, tt.table, tt.column, tt.field, tt.value)
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	}

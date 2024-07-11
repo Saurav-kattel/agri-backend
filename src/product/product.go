@@ -75,8 +75,14 @@ func GetProductsBySlug(db *sqlx.DB, slug string) (*lib.ProductDetails, error) {
 	return &data, err
 }
 
-func UpdateProductAttrib[T any](db *sqlx.DB, slug, table, column string, value T) error {
-	query := fmt.Sprintf("UPDATE %s SET %s = $1 WHERE slug = $2", table, column)
-	_, err := db.Exec(query, value, slug)
+func UpdateProductAttrib[T any](db *sqlx.DB, fieldValue, tableName, column, field string, value T) error {
+
+	query := fmt.Sprintf("UPDATE %s SET %s = $1 WHERE %s = $2", tableName, column, field)
+	_, err := db.Exec(query, value, fieldValue)
+	return err
+}
+
+func DeleteProduct(db *sqlx.DB, slug string) error {
+	_, err := db.Exec("DELETE FROM products WHERE slug = $1", slug)
 	return err
 }
