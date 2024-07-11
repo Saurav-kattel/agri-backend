@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 )
 
 type writerWrapper struct {
@@ -55,8 +56,8 @@ const UsersContextKey UsersContextKeyType = "users_key"
 func AuthMiddleware(db *sqlx.DB) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			token := r.URL.Query().Get("auth_token")
+			_ = godotenv.Load()
+			token := r.Header.Get("auth_token")
 
 			if token == "" || token == "undefined" {
 				lib.WriteResponse(

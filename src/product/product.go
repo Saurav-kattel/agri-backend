@@ -15,18 +15,17 @@ func AddProduct(db *sqlx.DB, products lib.Product, attrib lib.Attrib, userId, sl
 		return err
 	}
 
-	attrib.Product_id = &id
-	err = addAttrib(db, slug, attrib)
+	err = addAttrib(db, slug, attrib, id)
 	return err
 }
 
-func addAttrib(db *sqlx.DB, slug string, attrib lib.Attrib) error {
+func addAttrib(db *sqlx.DB, slug string, attrib lib.Attrib, productId string) error {
 	_, err := db.Exec(
 		"INSERT INTO product_attrib(price, quantity,status, product_id,slug) VALUES($1,$2,$3,$4,$5)",
 		attrib.Price,
 		attrib.Quantity,
 		attrib.Status,
-		attrib.Product_id,
+		productId,
 		slug,
 	)
 	return err

@@ -3,20 +3,25 @@ package handlers
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"sauravkattel/agri/src/lib"
+	"sauravkattel/agri/src/middlewares"
+	"sauravkattel/agri/src/product"
 	"sauravkattel/agri/src/users"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
-var SALT = os.Getenv("SALT")
-var KEY = os.Getenv("KEY")
-
 func RegisterUserHandler(db *sqlx.DB, ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		SALT := os.Getenv("SALT")
+		KEY := os.Getenv("KEY")
+
 		if r.Method != "POST" {
 			lib.WriteResponse(w, http.StatusMethodNotAllowed, lib.ApiResponse{
 				Status:  http.StatusMethodNotAllowed,
@@ -78,7 +83,8 @@ func RegisterUserHandler(db *sqlx.DB, ctx context.Context) http.HandlerFunc {
 		}
 
 		// create a new user
-		id, err := users.CreateUser(db, userPayload, SALT)
+		hashPassword := lib.HashGenerator(userPayload.Password, SALT)
+		id, err := users.CreateUser(db, userPayload, hashPassword)
 
 		if err != nil {
 			lib.WriteResponse(w, http.StatusInternalServerError, lib.ApiResponse{
@@ -173,7 +179,13 @@ func LoginUserHandler(db *sqlx.DB, ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		if ok := lib.ComparePassword(data.Password, userPayload.Password, SALT); !ok {
+		SALT := os.Getenv("SALT")
+		KEY := os.Getenv("KEY")
+
+		log.Println(SALT, KEY)
+		ok := lib.ComparePassword(data.Password, userPayload.Password, SALT)
+		log.Println(ok, data.Password, userPayload.Password)
+		if !ok {
 			lib.WriteResponse(
 				w,
 				http.StatusBadRequest,
@@ -217,6 +229,76 @@ func LoginUserHandler(db *sqlx.DB, ctx context.Context) http.HandlerFunc {
 			Status:  http.StatusOK,
 			Message: "registered successfully",
 		})
+
+	}
+}
+
+func AddProduct(db *sqlx.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			lib.WriteResponse(w, http.StatusMethodNotAllowed, lib.ApiResponse{
+				Status:  http.StatusMethodNotAllowed,
+				Message: "cannot use other http method then POST",
+				Response: lib.Res{
+					Error: "invalid http request method",
+				},
+			})
+			return
+		}
+
+		// parsing req.body into json or struct
+		productPayload, err := lib.ParseJson[lib.ProductPayload](r)
+		if err != nil {
+			lib.WriteResponse(w, http.StatusInternalServerError, lib.ApiResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "error occured while parsing req.body",
+				Response: lib.Res{
+					Error: err.Error(),
+				},
+			})
+			return
+
+		}
+
+		userData, ok := r.Context().Value(middlewares.UsersContextKey).(*lib.User)
+		if !ok {
+			lib.WriteResponse(w, http.StatusInternalServerError, lib.ApiResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "error occured while fetching users",
+				Response: lib.Res{
+					Error: "cannot parse data from req context",
+				},
+			})
+			return
+
+		}
+
+		charSeq := lib.GetRandomCharSequence()
+		productSlug := strings.Join(strings.Split(productPayload.Product.Name, " "), "-") + "-" + charSeq
+
+		err = product.AddProduct(db, productPayload.Product, productPayload.Attrib, userData.Id, productSlug)
+		if err != nil {
+			lib.WriteResponse(w, http.StatusInternalServerError, lib.ApiResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "error occured while inserting products",
+				Response: lib.Res{
+					Error: err.Error(),
+				},
+			})
+			return
+		}
+
+		lib.WriteResponse(
+			w,
+			http.StatusOK,
+			lib.ApiResponse{
+				Status:  http.StatusOK,
+				Message: "success",
+				Response: lib.Res{
+					Data: "succrss",
+				},
+			},
+		)
 
 	}
 }

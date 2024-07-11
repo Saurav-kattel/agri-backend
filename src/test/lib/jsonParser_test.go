@@ -10,6 +10,71 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParseProductPayload(t *testing.T) {
+	type args struct {
+		r *http.Request
+	}
+	type T any
+
+	tests := []struct {
+		name    string
+		args    args
+		want    *lib.ProductPayload
+		wantErr bool
+	}{
+		{
+			name: "valid test",
+			args: args{
+				r: &http.Request{
+					Body: io.NopCloser(bytes.NewBufferString(`{			
+						"product": {
+						"name": "johndoe",
+						"description": "jejec"
+						},
+						"attrib": {
+						"price": 1.2,
+						"quantity": 200,
+						"status": "1"
+						}
+					}`)),
+				},
+			},
+
+			want: &lib.ProductPayload{
+				Product: lib.Product{
+					Name:        "johndoe",
+					Description: "jejec",
+				},
+				Attrib: lib.Attrib{
+					Status:   "1",
+					Quantity: 200,
+					Price:    1.2,
+				},
+			},
+			wantErr: false,
+		}, {
+			name: "invalid test",
+			args: args{
+				r: &http.Request{
+					Body: io.NopCloser(bytes.NewBufferString(``)),
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := lib.ParseJson[lib.ProductPayload](tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseJson() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, got, tt.want, "the retrun value was nil")
+		})
+	}
+}
 func TestParseJsonUserPayload(t *testing.T) {
 	type args struct {
 		r *http.Request
@@ -22,7 +87,6 @@ func TestParseJsonUserPayload(t *testing.T) {
 		want    *lib.UserPayload
 		wantErr bool
 	}{
-
 		{
 			name: "valid test",
 			args: args{
@@ -46,9 +110,7 @@ func TestParseJsonUserPayload(t *testing.T) {
 				Address:     "123 Main St",
 			},
 			wantErr: false,
-		},
-
-		{
+		}, {
 			name: "invalid test",
 			args: args{
 				r: &http.Request{

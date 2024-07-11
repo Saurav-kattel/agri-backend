@@ -18,7 +18,7 @@ type JwtData struct {
 
 type UserLoginPayload struct {
 	Email    string `json:"email" db:"email"`
-	Password string `json:"passowrd" db:"password"`
+	Password string `json:"password" db:"password"`
 }
 
 type User struct {
@@ -47,11 +47,14 @@ type Product struct {
 }
 
 type Attrib struct {
-	Price      float32 `json:"price" db:"price"`
-	Quantity   float32 `json:"quantity" db:"quantity"`
-	Status     string  `json:"status" db:"status"`
-	Product_id *string `json:"product_id" db:"product_id"`
-	Slug       string  `json:"slug" db:"slug"`
+	Price    float32 `json:"price" db:"price"`
+	Quantity float32 `json:"quantity" db:"quantity"`
+	Status   string  `json:"status" db:"status"`
+}
+
+type ProductPayload struct {
+	Product Product `json:"product"`
+	Attrib  Attrib  `json:"attrib"`
 }
 
 type ProductDetails struct {
