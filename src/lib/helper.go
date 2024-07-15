@@ -20,15 +20,18 @@ func ComparePassword(hash, password, salt string) bool {
 	return passHash == hash
 }
 
+func ParseFlags(r *http.Request) {
+	// TODO: this is dangerous
+}
+
 func ValidateUserPayload(payload *UserPayload) *ApiResponse {
 
 	if payload.AccountType != "seller" && payload.AccountType != "buyer" {
 		return &ApiResponse{
 			Status:  http.StatusBadRequest,
-			Message: "unkown role field",
+			Message: "unkown account type ",
 			Response: Res{
-				Error: "unknown role field",
-				Data:  nil,
+				Error: "unknown account_type field",
 			},
 		}
 	}

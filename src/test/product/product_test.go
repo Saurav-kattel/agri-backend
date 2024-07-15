@@ -164,16 +164,13 @@ func TestUpdateAttrib(t *testing.T) {
 	// Define test cases
 	tests := []struct {
 		slug     string
-		table    string
 		column   string
 		value    interface{}
-		field    string
 		expected string
 	}{
-		{"test-slug", "product_attrib", "quantity", 10, "id", `UPDATE product_attrib SET quantity = \$1 WHERE id = \$2`},
-		{"test-slug", "product_attrib", "price", 19.99, "id", `UPDATE product_attrib SET price = \$1 WHERE id = \$2`},
-		{"test-slug", "product_attrib", "status", "1", "id", `UPDATE product_attrib SET status = \$1 WHERE id  = \$2`},
-		{"test-slug", "products", "name", "saurav", "slug", `UPDATE products SET name = \$1 WHERE slug = \$2`},
+		{"test-slug", "quantity", 10, `UPDATE product_attrib SET quantity = \$1 WHERE  slug = \$2`},
+		{"test-slug", "price", 19.99, `UPDATE product_attrib SET price = \$1 WHERE slug = \$2`},
+		{"test-slug", "status", "1", `UPDATE product_attrib SET status = \$1 WHERE slug  = \$2`},
 	}
 
 	for _, tt := range tests {
@@ -181,8 +178,87 @@ func TestUpdateAttrib(t *testing.T) {
 			WithArgs(tt.value, tt.slug).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		err := product.UpdateProductAttrib(sqlxDB, tt.slug, tt.table, tt.column, tt.field, tt.value)
+		err := product.UpdateProductAttrib(sqlxDB, tt.slug, tt.column, tt.value)
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
+	}
+}
+
+func TestDeleteProduct(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	// Create a SQLx DB instance from the mockDB
+	db := sqlx.NewDb(mockDB, "sqlmock")
+	slug := "test-slug"
+
+	mock.ExpectExec(`DELETE FROM products WHERE user_id = \$1 AND id = \(
+	SELECT product_id FROM product_attrib WHERE slug = \$2
+	\)`).WithArgs("1", slug).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	t.Run("test delete product", func(t *testing.T) {
+		err = product.DeleteProduct(db, "1", slug)
+		assert.NoError(t, err, "error occured")
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err, "All expectations were not met")
+	})
+}
+
+func TestUpdateProducts(t *testing.T) {
+	// Create mock database
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create mock database: %s", err)
+	}
+	defer db.Close()
+
+	// Create a new sqlx DB instance
+	sqlxDB := sqlx.NewDb(db, "sqlmock")
+
+	// Define test cases
+	tests := []struct {
+		slug      string
+		column    string
+		value     interface{}
+		expected  string
+		expectErr bool
+	}{
+		{
+			slug:     "test-slug",
+			column:   "name",
+			value:    "hehehhe",
+			expected: `UPDATE products SET name = \$1 WHERE id = \(SELECT product_id FROM product_attrib WHERE slug = \$2\)`,
+		},
+		{
+			slug:     "test-slug",
+			column:   "dec",
+			value:    "hehehe",
+			expected: `UPDATE products SET dec = \$1 WHERE id = \(SELECT product_id FROM product_attrib WHERE slug = \$2\)`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.slug+"_"+tt.column, func(t *testing.T) {
+			if !tt.expectErr {
+				// Setup expectation
+				mock.ExpectExec(tt.expected).
+					WithArgs(tt.value, tt.slug).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+			}
+
+			// Call the method to test
+			err := product.UpdateProduct(sqlxDB, tt.slug, tt.column, tt.value)
+
+			// Assert results
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NoError(t, mock.ExpectationsWereMet())
+			}
+		})
 	}
 }

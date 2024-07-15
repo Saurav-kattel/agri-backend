@@ -30,6 +30,7 @@ func main() {
 	if err != nil {
 		log.Fatal("error connecting to db: ", err)
 	}
+	defer db.DB.Close()
 
 	routes := handlers.GetRoutes(db.DB, ctx)
 
@@ -46,7 +47,9 @@ func main() {
 		Handler: c.Handler(routes),
 	}
 
-	if err := server.ListenAndServe(); err != nil {
+	log.Print("server started. listining on port 4000")
+	err = server.ListenAndServe()
+	if err != nil {
 		log.Fatal(err)
 	}
 }
